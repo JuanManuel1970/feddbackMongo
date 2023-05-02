@@ -1,7 +1,10 @@
 const { validationResult } = require('express-validator') 
 const Usuario = require('../models/userModel');
 const bcrypt = require('bcrypt');
+const { generarjsonWebToken } = require('../middlewares/generarToken')
 
+
+//podemos crear la función de JWT
 
 const paginaPrincipal = (req, res) => { 
     //console.log(req);
@@ -15,11 +18,13 @@ const paginaError = (req, res) => {
     res.status(500).send(`<h1>Todo mal!!</h1>`)
 }
 
+const paginaLogin = (req, res) => {
+    res.status(500).send(`<h1>Página para el Login</h1>`)
+}
 
 const registrarUsuario = async (req, res) => {
-
-    //1. Verificacmos si los datos son correctos
     
+    //1. Verificamos si los datos son correctos - viene de check
     const errores = validationResult(req);
     
     if(!errores.isEmpty()){
@@ -27,72 +32,110 @@ const registrarUsuario = async (req, res) => {
             errores: errores.array()
         })
     }
-    //2.desestructuramos las variables
-    
+
+    //2. Desestructuramos las variables
     const { nombre, email, password } = req.body;
-    
     console.log(`1. Mis datos son: ${nombre} - ${email} - ${password}`);
 
+    //3. Verificar si el usuario ya existe
+    try {
+        let usuarioExiste = await Usuario.findOne({email}) 
+        console.log(`2. Existe: ${usuarioExiste}`);
 
-
-        //3. Verificacmos si el usuario ya existe 
-        
-        try {
-            let usuarioExiste =  await Usuario.findOne({email})
-            console.log(`2.Existe : ${usuarioExiste}`);
-            if(usuarioExiste){
-                return res.status(400).json({
-                    errores: 'El usuario ya existe'
-
+        if(usuarioExiste){
+            return res.status(400).json({
+                errores: 'El ususario ya existe'
             })
         }
 
-            //4.si no existe , creamos u nuevo  usuario
+    //4. si no Existe, creamos un nuevo usuario
+    const nuevoUsuario = new Usuario(req.body);
 
-            let nuevoUsuario = new Usuario(req.body);
+    console.log(`3. Nuevo Usuario a guardar: ${nuevoUsuario}`);
 
+    //5. Creamos la salt para la mezcla con el password
+    const salt = bcrypt.genSaltSync();
 
-        console.log(`3.NUevo Usuario a guardar :${nuevoUsuario}`);
-        const salt = bcrypt.genSaltSync();
-        console.log(`4. Salt para encriptacion : ${salt}`);
-        console.log(`5. El password sin Salt es : ${nuevoUsuario.password}`);
-        
-        //6.Mezclamos la salt con el password del usuario
-        nuevoUsuario.password = bcrypt.hashSync(password, salt);
-        
-        console.log(`6. El password con Salt es : ${nuevoUsuario.password}`);
-        
-        //7. insertamos en la db un nuevo usuario
+    console.log(`4. Sal para encriptación: ${salt}`);
 
-          await nuevoUsuario.save();
+    console.log(`5. EL password sin salt es: ${nuevoUsuario.password}`);
 
-           res.status(200).end('Tus datos fueron recibidos  y guardados en la DB ')
- //5.Creamos la salt para encriptar el password    
+    //6. Mezclamos la sal con el password del usuario
+    nuevoUsuario.password = bcrypt.hashSync(password, salt);
 
-//6.respondemoa a la peticion del cliente , si todo va bien
-        } catch (error) {
-console.log(error);
-return res.status(400).json ({
-    mensaje : 'NUestros mejores Deps , estan trabajando para solucionar el problema'
+    console.log(`6. EL password CON salt es: ${nuevoUsuario.password}`);
 
-    })
+    //7. Insertamos en la Database el nuevo usuario
+    await nuevoUsuario.save();
+
+    //8. Asignamos el token al usuario
+    let token = await generarjsonWebToken(nuevoUsuario);
+
+    //9. Imprimimos el token del nuevo usuario
+    console.log(token);
+
+    //6. Respondemos a la petición del cliente si todo va bien
+    res.status(200).end('Tus datos fueron recibidos y guardados en la DB')
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            mensaje: 'Nuestros mejores Deps están trabajando para solucionar el Problem'
+        })
+    }
 }
-   
 
 
+const loginUsuario = async (req, res) => {
+
+    const { email, password } = req.body;
+
+    console.log(`1. Login: ${email} - ${password}`);
+
+    //1. Buscamos el email en la database
+    try {
+        let usuarioExiste = await Usuario.findOne({email}) 
+        console.log(`2. Existe: ${usuarioExiste.email}`);
+        
+        //2. Si no existe le pedimos que se registre
+        if(!usuarioExiste){
+            return res.status(400).json({
+                errores: 'El email NO está registrado - Favor Registrarse'
+            })
+        }
+
+        //3. Vemos el passwor del usuario
+        console.log(`3. Encriptación: ${usuarioExiste.password}`);
+
+        //4. Si existe, validamos su password
+        const validarPassword = bcrypt.compareSync(password, usuarioExiste.password);
+
+        //5. Imprimimos la validación del password
+        console.log(`4. Validado: ${validarPassword}`);
 
 
+        if(validarPassword){
+            return res.status(400).json({
+                Administracion: 'Bienvenido Administrador'
+            })
+        }else{
+            return res.status(400).json({
+                Error: 'Password incorrecto'
+            })
+        }
 
+    } catch (error) {
+        return res.status(400).json({
+            Error: 'Email o Password incorrectos'
+        })
+    }
 }
 
 
 const paginaPrueba = (req, res) => {
 
         const { nombre, email, password } = req.body;
-
-        //iria la insercion de datos con MongoDB
     
-
         const errores = validationResult(req);
 
         if(!errores.isEmpty()){
@@ -112,6 +155,8 @@ const paginaPrueba = (req, res) => {
 module.exports = {
     paginaPrincipal,
     paginaError,
+    paginaLogin,
     registrarUsuario,
+    loginUsuario,
     paginaPrueba
 }

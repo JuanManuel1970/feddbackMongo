@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //rutas
 app.use('/', userRoutes);
+//app.use('/productos', productRoutes);
 
 //escucha de la app
 app.listen(PORT, () => {
