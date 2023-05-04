@@ -4,18 +4,19 @@ const router = express.Router();
 const { check, body } = require('express-validator');
 const {
     paginaPrincipal,
-    paginaError,
     paginaLogin,
+    paginaRegistro,
     registrarUsuario,
     loginUsuario,
-    paginaPrueba
+    paginaPrueba,
+    paginaError
 } = require('../controllers/userControllers')
 
 router.get('/', paginaPrincipal);
-
-router.get('/error', paginaError);
-
 router.get('/login', paginaLogin);
+router.get('/registrar', paginaRegistro);
+
+
 
 router.post('/',  
 [
@@ -31,10 +32,11 @@ router.post('/login',
 ], loginUsuario);
 
 router.post('/body', 
-    body('nombre').isLength({ min: 4 }),
-    body('email').isEmail(),
-    body('password').isLength({ min: 5 })
+body('nombre').isLength({ min: 4 }),
+body('email').isEmail(),
+body('password').isLength({ min: 5 })
 , paginaPrueba);
 
+router.get('/error', paginaError);
 
 module.exports = router;

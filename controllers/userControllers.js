@@ -1,16 +1,14 @@
 const { validationResult } = require('express-validator') 
 const Usuario = require('../models/userModel');
 const bcrypt = require('bcrypt');
-const { generarjsonWebToken } = require('../middlewares/generarToken')
+const { generarJsonWebToken } = require('../middlewares/generarToken')
 
 
 //podemos crear la función de JWT
 
 const paginaPrincipal = (req, res) => { 
     //console.log(req);
-    res.status(200).json({
-        mensaje: "Código 200 - Todo OK!"
-    })
+    res.status(200).render('../views/partials/home');
 }
 
 const paginaError = (req, res) => { 
@@ -21,6 +19,13 @@ const paginaError = (req, res) => {
 const paginaLogin = (req, res) => {
     res.status(500).send(`<h1>Página para el Login</h1>`)
 }
+
+const paginaRegistro = (req, res) => {
+    res.status(200).render('../views/registro')
+
+}
+
+
 
 const registrarUsuario = async (req, res) => {
     
@@ -69,13 +74,13 @@ const registrarUsuario = async (req, res) => {
     await nuevoUsuario.save();
 
     //8. Asignamos el token al usuario
-    let token = await generarjsonWebToken(nuevoUsuario);
+    let token = await generarJsonWebToken(nuevoUsuario);
 
     //9. Imprimimos el token del nuevo usuario
     console.log(token);
 
     //6. Respondemos a la petición del cliente si todo va bien
-    res.status(200).end('Tus datos fueron recibidos y guardados en la DB')
+    res.status(200).render('recibido')
 
     } catch (error) {
         console.log(error);
@@ -154,9 +159,10 @@ const paginaPrueba = (req, res) => {
 
 module.exports = {
     paginaPrincipal,
-    paginaError,
     paginaLogin,
+    paginaRegistro,
     registrarUsuario,
     loginUsuario,
-    paginaPrueba
+    paginaPrueba,
+    paginaError
 }

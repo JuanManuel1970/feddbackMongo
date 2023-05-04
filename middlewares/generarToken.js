@@ -4,7 +4,7 @@ const miFirma = process.env.PRIVATE_KEY;
 
 console.log(miFirma);
 
-const generarjsonWebToken = (usuario)=>{
+const generarJsonWebToken = (usuario)=>{
 
     return new Promise((resolve, reject)=>{ 
         jwt.sign( 
@@ -23,5 +23,5 @@ const generarjsonWebToken = (usuario)=>{
 }
 
 module.exports = {
-    generarjsonWebToken 
+    generarJsonWebToken 
 }
