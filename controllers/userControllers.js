@@ -80,7 +80,7 @@ const registrarUsuario = async (req, res) => {
     console.log(token);
 
     //6. Respondemos a la petición del cliente si todo va bien
-    res.status(200).render('recibido')
+    res.status(200).render('../views/recibido')
 
     } catch (error) {
         console.log(error);
